@@ -1,0 +1,21 @@
+const { expect } = require("chai");
+
+describe("RevenueSplitter", function () {
+  it("splits ETH among payees", async function () {
+    const [a,b,c, sender] = await ethers.getSigners();
+
+    const Splitter = await ethers.getContractFactory("RevenueSplitter");
+    const splitter = await Splitter.deploy([a.address,b.address,c.address],[50,30,20]);
+    await splitter.deployed();
+
+    await sender.sendTransaction({ to: splitter.target, value: ethers.parseEther("1") });
+
+    const balA0 = await ethers.provider.getBalance(a.address);
+    await splitter.release(a.address);
+    await splitter.release(b.address);
+    await splitter.release(c.address);
+    const balA1 = await ethers.provider.getBalance(a.address);
+
+    expect(balA1).to.be.gt(balA0);
+  });
+});
